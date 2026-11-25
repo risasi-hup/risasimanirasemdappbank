@@ -372,6 +372,16 @@
 .gdex-row{display:flex;justify-content:space-between;gap:8px;font-size:.72rem;padding:3px 0;border-bottom:1px dashed rgba(255,255,255,.07)}
 .gdex-row a,.gdex-all{color:var(--neon-gold,#ffd166);text-decoration:none}.gdex-row span{color:#aaa;text-align:right}
 .gdex-all{display:inline-block;margin-top:6px;font-size:.7rem}.gdex-empty{font-size:.72rem;color:#888}
+
+.wm-bg{position:fixed;inset:0;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;z-index:99999;padding:16px}
+.wm-box{width:min(420px,100%);max-height:90vh;overflow:auto;background:#0b0d14;border:1px solid var(--gold,#d4a017);border-radius:16px;padding:16px;color:#eee;box-shadow:0 10px 40px rgba(0,0,0,.6)}
+.wm-h{display:flex;justify-content:space-between;align-items:center;font-family:Orbitron,sans-serif;font-size:.85rem;letter-spacing:1px;color:#ffd166;margin-bottom:6px}
+.wm-x{background:none;border:0;color:#aaa;font-size:1.2rem;cursor:pointer}
+.wm-sec{font-size:.66rem;color:#8a8fa3;margin:12px 0 4px;letter-spacing:.5px}
+.wm-btn{display:flex;align-items:center;gap:10px;width:100%;padding:12px;margin:6px 0;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#fff;font-size:.9rem;cursor:pointer;text-decoration:none;box-sizing:border-box;min-height:44px}
+.wm-btn:hover{border-color:var(--gold,#d4a017)}.wm-btn img{width:26px;height:26px;border-radius:6px}
+.wm-note{font-size:.7rem;color:#8a8fa3;margin-top:12px;line-height:1.4}
+.wm-disc{display:none;margin:6px auto 0;background:none;border:1px solid rgba(255,255,255,.2);color:#aaa;border-radius:999px;padding:4px 12px;font-size:.72rem;cursor:pointer}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.4.12/hls.min.js" crossorigin="anonymous"></script>
 <style id="at-au-style">
@@ -475,6 +485,7 @@ input[type=text]::placeholder,input[type=number]::placeholder,textarea::placehol
         
         <div id="status">OFFLINE • CÜZDAN BAĞLANTISI BEKLENİYOR...</div>
         <button class="main-connect-btn" onclick="connectWallet()" id="connect-btn">Cüzdanı Bağla (Web3 Connect)</button>
+        <button class="wm-disc" id="disc-btn" onclick="walletDisconnect()">Bağlantıyı kes</button>
 
         <!-- RSM rozeti: cüzdan bağlanınca logo burada belirir -->
         <div id="wallet-badge" class="wallet-badge">
@@ -939,21 +950,105 @@ input[type=text]::placeholder,input[type=number]::placeholder,textarea::placehol
         if (net.tokens.some(t => (t.ex || t.rd) && t.ok === undefined) && retry < 4) setTimeout(() => verifyTokens(retry + 1), 4000);
     }
 
+    /* ===== CÜZDAN BAĞLANTISI: tarayıcı cüzdanları (EIP-6963) · cüzdan içi tarayıcı · mobilde cüzdan uygulamasında açma · WalletConnect v2 =====
+       Özel anahtar sorulmaz; imza ve onaylar yalnız cüzdanda verilir. Bağlantı yalnız kullanıcı dokununca başlar. */
+    const WC_PROJECT_ID = '';   // cloud.reown.com'da ücretsiz Project ID alıp buraya yazın (Netlify adresinizi izinli alan adlarına ekleyin)
+    var walletProvider = null; const found6963 = []; const _bound = new WeakSet(); let _wcP = null;
+    const getEth = () => walletProvider || window.ethereum;
+    window.addEventListener('eip6963:announceProvider', e => { const d = e.detail; if (d && d.info && d.provider && !found6963.some(x => x.info.uuid === d.info.uuid)) found6963.push(d); });
+    window.dispatchEvent(new Event('eip6963:requestProvider'));
+    const wName = e => (e.isTrust || e.isTrustWallet) ? 'Trust Wallet' : e.isCoinbaseWallet ? 'Coinbase Wallet' : e.isMetaMask ? 'MetaMask' : 'Tarayıcı cüzdanı';
+
+    function bindWalletEvents(eth) {   // dinleyiciler sağlayıcı başına yalnız bir kez
+        if (!eth || !eth.on || _bound.has(eth)) return; _bound.add(eth);
+        eth.on('accountsChanged', a => { if (a && a.length) connectWallet(true); else location.reload(); });
+        eth.on('chainChanged', () => location.reload());
+        eth.on('disconnect', () => { try { localStorage.removeItem('wc_on'); } catch (e) {} location.reload(); });
+    }
+    async function walletDisconnect() {
+        try { if (walletProvider && walletProvider.disconnect) await walletProvider.disconnect(); } catch (e) {}
+        try { localStorage.removeItem('wc_on'); localStorage.setItem('wallet_off', '1'); } catch (e) {}
+        location.reload();
+    }
+    document.addEventListener('visibilitychange', async () => {   // cüzdan uygulamasından dönünce hesabı tazele
+        if (document.hidden || !userAddress || !getEth()) return;
+        try { const a = await getEth().request({ method: 'eth_accounts' }); if (!a.length) location.reload(); else if (a[0].toLowerCase() !== userAddress.toLowerCase()) connectWallet(true); } catch (e) {}
+    });
+
+    async function wcProvider() {
+        if (_wcP) return _wcP;
+        if (!window['@walletconnect/ethereum-provider']) {
+            let ok = false;
+            for (const u of ['https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.17.0/dist/index.umd.js', 'https://unpkg.com/@walletconnect/ethereum-provider@2.17.0/dist/index.umd.js']) {
+                try { await new Promise((res, rej) => { const s = document.createElement('script'); s.src = u; s.async = true; s.crossOrigin = 'anonymous'; s.referrerPolicy = 'no-referrer'; s.onload = res; s.onerror = () => { s.remove(); rej(); }; document.head.appendChild(s); }); ok = true; break; } catch (e) {}
+            }
+            if (!ok) throw new Error('WalletConnect yüklenemedi');
+        }
+        const ns = window['@walletconnect/ethereum-provider'] || {}, EP = ns.EthereumProvider || (ns.default && ns.default.EthereumProvider) || ns.default;
+        if (!EP || !EP.init) throw new Error('WalletConnect hazır değil');
+        const ids = Object.keys(NETWORKS).map(k => parseInt(k, 16)), rpcMap = {}; Object.keys(NETWORKS).forEach(k => { rpcMap[parseInt(k, 16)] = NETWORKS[k].rpcUrls[0]; });
+        _wcP = await EP.init({ projectId: WC_PROJECT_ID, chains: [56], optionalChains: ids, showQrModal: true, rpcMap,
+            methods: ['eth_sendTransaction', 'personal_sign'], optionalMethods: ['wallet_switchEthereumChain', 'wallet_addEthereumChain', 'wallet_watchAsset', 'eth_signTypedData_v4'], events: ['chainChanged', 'accountsChanged'],
+            metadata: { name: 'RISASIMANI DEX', description: 'BNB Smart Chain takas arayüzü', url: location.origin, icons: [location.origin + '/logos/rsm-256.png'] } });
+        return _wcP;
+    }
+    async function connectWC() {
+        try {
+            const wp = await wcProvider();
+            if (!wp.session) await wp.connect();   // QR (masaüstü) · cüzdan listesi ve derin bağlantı (mobil)
+            walletProvider = wp; try { localStorage.setItem('wc_on', '1'); } catch (e) {}
+            closeWalletModal(); connectWallet();
+        } catch (e) { showToast('WalletConnect bağlantısı tamamlanmadı' + (e && e.message ? ': ' + e.message : ''), 'error'); }
+    }
+    function pickWallet(w) { walletProvider = w.provider; try { localStorage.setItem('wallet_last', w.info.rdns || ''); } catch (e) {} closeWalletModal(); connectWallet(); }
+    function closeWalletModal() { const m = document.getElementById('wm-modal'); if (m) m.remove(); }
+    function openWalletModal() {
+        closeWalletModal();
+        const bg = document.createElement('div'); bg.className = 'wm-bg'; bg.id = 'wm-modal'; bg.onclick = e => { if (e.target === bg) closeWalletModal(); };
+        const box = document.createElement('div'); box.className = 'wm-box'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true');
+        const hd = document.createElement('div'); hd.className = 'wm-h'; hd.appendChild(document.createTextNode('CÜZDAN SEÇ'));
+        const x = document.createElement('button'); x.className = 'wm-x'; x.textContent = '✕'; x.onclick = closeWalletModal; hd.appendChild(x); box.appendChild(hd);
+        const sec = t => { const d = document.createElement('div'); d.className = 'wm-sec'; d.textContent = t; box.appendChild(d); };
+        const btn = (label, icon, fn, href) => {
+            const b = document.createElement(href ? 'a' : 'button'); b.className = 'wm-btn';
+            if (href) { b.href = href; b.rel = 'noopener noreferrer'; } else b.onclick = fn;
+            if (icon && /^data:image\/(png|svg\+xml|webp|jpeg|gif);base64,/.test(icon)) { const i = document.createElement('img'); i.alt = ''; i.src = icon; b.appendChild(i); }
+            b.appendChild(document.createTextNode(label)); box.appendChild(b);
+        };
+        const list = found6963.length ? found6963 : (window.ethereum ? [{ info: { name: wName(window.ethereum), icon: '', rdns: '' }, provider: window.ethereum }] : []);
+        if (list.length) { sec('BU CİHAZDAKİ CÜZDANLAR'); list.forEach(w => btn(String(w.info.name).slice(0, 30), w.info.icon, () => pickWallet(w))); }
+        if (WC_PROJECT_ID) { sec('MOBİL CÜZDAN · QR VEYA UYGULAMA'); btn('WalletConnect', '', connectWC); }
+        if (!window.ethereum) {
+            const here = location.href.split('#')[0];
+            sec('CÜZDAN UYGULAMASINDA AÇ (SAYFA CÜZDANIN İÇ TARAYICISINDA AÇILIR)');
+            btn('MetaMask', '', null, 'https://metamask.app.link/dapp/' + here.replace(/^https?:\/\//, ''));
+            btn('Trust Wallet', '', null, 'https://link.trustwallet.com/open_url?coin_id=20000714&url=' + encodeURIComponent(here));
+            btn('Coinbase Wallet', '', null, 'https://go.cb-w.com/dapp?cb_url=' + encodeURIComponent(here));
+        }
+        const nt = document.createElement('div'); nt.className = 'wm-note'; nt.textContent = 'Özel anahtar veya kurtarma ifadesi istenmez. Her işlemi cüzdanınızda onaylarsınız.'; box.appendChild(nt);
+        bg.appendChild(box); document.body.appendChild(bg);
+    }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeWalletModal(); });
+
     // Sayfa yenilenince (chainChanged) seçili ağı ve izin verilmiş cüzdanı sessizce geri yükler.
     async function restoreWallet() {
-        if (!window.ethereum) return;
-        provider = new ethers.providers.Web3Provider(window.ethereum);
+        try { if (localStorage.getItem('wallet_off') === '1') return; } catch (e) {}
+        await new Promise(r => setTimeout(r, 250));   // EIP-6963 duyurularını bekle
+        if (!walletProvider) { let last = null; try { last = localStorage.getItem('wallet_last'); } catch (e) {} const m = last && found6963.find(w => w.info.rdns === last); if (m) walletProvider = m.provider; }
+        if (!walletProvider && WC_PROJECT_ID) { let on = null; try { on = localStorage.getItem('wc_on'); } catch (e) {} if (on === '1') { try { const wp = await wcProvider(); if (wp.session) walletProvider = wp; else localStorage.removeItem('wc_on'); } catch (e) {} } }
+        if (!getEth()) return;
+        provider = new ethers.providers.Web3Provider(getEth());
         try {
-            const cid = await window.ethereum.request({ method: 'eth_chainId' });
+            const cid = await getEth().request({ method: 'eth_chainId' });
             if (NETWORKS[cid]) { currentChainId = cid; document.getElementById('network-selector').value = cid; }
-            const acc = await window.ethereum.request({ method: 'eth_accounts' });
-            if (acc.length) await connectWallet();
+            const acc = await getEth().request({ method: 'eth_accounts' });
+            if (acc.length) await connectWallet(true);
         } catch (e) {}
     }
 
     // İşlem göndermeden önce cüzdan, seçili ağda mı?
     async function ensureChain() {
-        const cid = await window.ethereum.request({ method: 'eth_chainId' });
+        const cid = await getEth().request({ method: 'eth_chainId' });
         if (cid === currentChainId) return;
         await switchNetwork(currentChainId);
         throw new Error("Cüzdan ağı değiştiriliyor; sayfa yenilenince işlemi tekrar başlatın.");
@@ -1029,9 +1124,9 @@ input[type=text]::placeholder,input[type=number]::placeholder,textarea::placehol
         populateTokenDropdowns();
         fetchLiveMarketData(); // Ağı değiştirince yan paneli de yeniden hesapla
 
-        if (window.ethereum) {
+        if (getEth()) {
             try {
-                await window.ethereum.request({
+                await getEth().request({
                     method: 'wallet_switchEthereumChain',
                     params: [{ chainId: chainIdHex }],
                 });
@@ -1040,7 +1135,7 @@ input[type=text]::placeholder,input[type=number]::placeholder,textarea::placehol
                 if (switchError.code === 4902) {
                     try {
                         const net = NETWORKS[chainIdHex];
-                        await window.ethereum.request({
+                        await getEth().request({
                             method: 'wallet_addEthereumChain',
                             params: [{
                                 chainId: net.chainId,
@@ -1058,13 +1153,12 @@ input[type=text]::placeholder,input[type=number]::placeholder,textarea::placehol
         }
     }
 
-    async function connectWallet() {
-        if (!window.ethereum) {
-            showToast(tLoc("Metamask veya Web3 uyumlu bir cüzdan tarayıcısı bulunamadı!"), "error");
-            return;
-        }
+    async function connectWallet(auto) {
+        if (!window.isSecureContext) { showToast('Güvenli bağlantı (https) gerekli', 'error'); return; }
+        if (!auto) { try { localStorage.removeItem('wallet_off'); } catch (e) {} }
+        if (!getEth() && !walletProvider || (!auto && !walletProvider && found6963.length > 1)) { openWalletModal(); return; }
         try {
-            provider = new ethers.providers.Web3Provider(window.ethereum);
+            provider = new ethers.providers.Web3Provider(getEth());
             await provider.send("eth_requestAccounts", []);
             signer = provider.getSigner();
             userAddress = await signer.getAddress();
@@ -1086,16 +1180,10 @@ input[type=text]::placeholder,input[type=number]::placeholder,textarea::placehol
             showToast(tLoc("Web3 Cüzdanı Bağlandı ve Bakiyeler Çekildi!"), "success");
             try { onRsmWalletConnected(); } catch (e) {}
 
-            window.ethereum.on('accountsChanged', (accounts) => {
-                if(accounts.length > 0) connectWallet();
-                else location.reload();
-            });
-            window.ethereum.on('chainChanged', () => {
-                location.reload(); 
-            });
+            bindWalletEvents(getEth()); const db = document.getElementById('disc-btn'); if (db) db.style.display = 'inline-block';
 
         } catch (err) {
-            showToast("Cüzdan bağlantı hatası: " + err.message, "error");
+            showToast(err && err.code === 4001 ? 'Bağlantı cüzdanda reddedildi' : err && err.code === -32002 ? 'Cüzdanda bekleyen bir bağlantı isteği var; cüzdan uygulamasını açıp onaylayın' : 'Cüzdan bağlantı hatası: ' + ((err && err.message) || err), 'error');
         }
     }
 
@@ -2218,10 +2306,10 @@ const AU_BOT_KEY = 'arb_bots';
     const auRejected = e => e && (e.code === 4001 || e.code === 'ACTION_REJECTED' || /user (rejected|denied)/i.test(e.message || ''));
     async function auBotTx(list, allowed) {   // setOperators: yalnız owner cüzdanı MetaMask ile onaylar
         if (!isArbOwner) throw new Error('Yalnız owner cüzdanı yetkilendirebilir');
-        const cid = await window.ethereum.request({ method: 'eth_chainId' });
+        const cid = await getEth().request({ method: 'eth_chainId' });
         if (cid !== '0x38') {
-            await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x38' }] });
-            provider = new ethers.providers.Web3Provider(window.ethereum); signer = provider.getSigner();
+            await getEth().request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x38' }] });
+            provider = new ethers.providers.Web3Provider(getEth()); signer = provider.getSigner();
         }
         const tx = await new ethers.Contract(ARB_CONTRACT, AU_ABI, signer).setOperators(list, allowed);
         showToast('Gönderildi: ' + tx.hash.substring(0, 12) + '…', 'info'); await tx.wait();
@@ -2518,9 +2606,9 @@ const AU_BOT_KEY = 'arb_bots';
     function addRsmToWallet(auto) { return addTokenToWallet(RSM_ADDR, RSM_LOGOS, 'RSM', auto); }
     function addAsmToWallet(auto) { return addTokenToWallet(ASM_ADDR, ASM_LOGOS, 'RASEM', auto); }
     async function addTokenToWallet(addr, logo, defSym, auto) {
-        if (!window.ethereum || !userAddress) return 'skip';
+        if (!getEth() || !userAddress) return 'skip';
         try {
-            const cid = await window.ethereum.request({ method: 'eth_chainId' });
+            const cid = await getEth().request({ method: 'eth_chainId' });
             if (cid !== '0x38') {
                 if (!auto) showToast(tLoc('RSM yalnızca BSC ağında eklenir — cüzdanı BSC ağına geçirin'), 'error');
                 return 'skip';
@@ -2539,7 +2627,7 @@ const AU_BOT_KEY = 'arb_bots';
             const image = Array.isArray(logo) ? await lgFirst(fb ? logo.concat(fb) : logo) : logo;
             lastLogoSrc = !image ? 'yok' : image.startsWith('data:') ? (image === gen ? 'sayfada üretilen 32×32' : 'gömülü 32×32') : (() => { try { return new URL(image).hostname; } catch (e) { return 'adres'; } })();   // yalnız gerçekten açılan logo adresi gider
             if (!image && !auto) showToast('Logo adresi açılmıyor: logos/ klasörünü siteye yükleyin', 'error');
-            const ok = await window.ethereum.request({
+            const ok = await getEth().request({
                 method: 'wallet_watchAsset',
                 params: { type: 'ERC20', options: { address: addr, symbol, decimals, image: image || undefined } }
             });
