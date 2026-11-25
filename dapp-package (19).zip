@@ -8,12 +8,27 @@
 /metadata/*
   Access-Control-Allow-Origin: *
   Content-Type: application/json; charset=utf-8
+/manifest.webmanifest
+  Content-Type: application/manifest+json; charset=utf-8
+  Cache-Control: public, max-age=3600
+/sw.js
+  Content-Type: application/javascript; charset=utf-8
+  Cache-Control: no-cache
+/icons/*
+  Cache-Control: public, max-age=86400
 
 <!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#050507">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="RSM DEX">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>RISASIMANI RASEM GÜROK STOŞHİ | MULTI-CHAIN TRUE DEX ENGINE</title>
     <link rel="icon" type="image/png" sizes="64x64" href="data:image/png;base64,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">
@@ -393,6 +408,22 @@
 .wm-btn:hover{border-color:var(--gold,#d4a017)}.wm-btn img{width:26px;height:26px;border-radius:6px}
 .wm-note{font-size:.7rem;color:#8a8fa3;margin-top:12px;line-height:1.4}
 .wm-disc{display:none;margin:6px auto 0;background:none;border:1px solid rgba(255,255,255,.2);color:#aaa;border-radius:999px;padding:4px 12px;font-size:.72rem;cursor:pointer}
+
+.pwa-row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:-8px 0 14px}
+.pwa-btn{background:linear-gradient(180deg,#1a1405,#0b0b0e);border:1px solid var(--gold,#d4a017);color:#ffd166;border-radius:999px;padding:9px 16px;font-family:Orbitron,sans-serif;font-size:.72rem;letter-spacing:.5px;cursor:pointer;min-height:40px}
+.wm-steps{margin:10px 0 0 18px;padding:0;font-size:.84rem;line-height:1.55;color:#ddd}
+.wm-disc{border-color:#ff5c5c;color:#ff8a8a;font-size:.8rem;padding:8px 18px;font-weight:700;min-height:40px}
+.input-bottom input{min-width:0}
+.input-bottom input,.switch-btn,.main-connect-btn,.pwa-btn{touch-action:manipulation}
+body{padding-bottom:env(safe-area-inset-bottom)}
+@media (max-width:1100px){.top-bar{position:relative}}
+@media (max-width:700px){
+ .layout-container{margin:12px 10px 0 10px}
+ .main-panel{order:-1;padding:16px}
+ .input-bottom{flex-wrap:wrap}
+ .input-bottom input{width:100%;flex:1 1 100%;font-size:1.3rem}
+ .token-select{max-width:100%}
+}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.4.12/hls.min.js" crossorigin="anonymous"></script>
 <style id="at-au-style">
@@ -493,10 +524,11 @@ input[type=text]::placeholder,input[type=number]::placeholder,textarea::placehol
     <div class="main-panel">
         <h1 id="ui-title">RISASIMANI RASEM GÜROK STOŞHİ</h1>
         <h2 id="ui-subtitle">TRUE DEX ROUTER & ON-CHAIN ENGINE</h2>
+        <div class="pwa-row" id="pwa-row"><button class="pwa-btn" onclick="installAndroid()">🤖 ANDROID’E İNDİR</button><button class="pwa-btn" onclick="pwaHelp('ios')">🍎 iPHONE / iPAD’E EKLE</button></div>
         
         <div id="status">OFFLINE • CÜZDAN BAĞLANTISI BEKLENİYOR...</div>
         <button class="main-connect-btn" onclick="connectWallet()" id="connect-btn">Cüzdanı Bağla (Web3 Connect)</button>
-        <button class="wm-disc" id="disc-btn" onclick="walletDisconnect()">Bağlantıyı kes</button>
+        <button class="wm-disc" id="disc-btn" onclick="walletDisconnect()">🔒 GÜVENLİ ÇIKIŞ</button>
 
         <!-- RSM rozeti: cüzdan bağlanınca logo burada belirir -->
         <div id="wallet-badge" class="wallet-badge">
@@ -529,7 +561,7 @@ input[type=text]::placeholder,input[type=number]::placeholder,textarea::placehol
                     <span>Bakiye: <span class="highlight" id="main-from-bal">0.00</span></span>
                 </div>
                 <div class="input-bottom">
-                    <input type="number" id="main-from-amount" placeholder="0.0" oninput="calculateQuote('main')">
+                    <input type="text" inputmode="decimal" autocomplete="off" autocapitalize="off" spellcheck="false" id="main-from-amount" placeholder="0.0" oninput="amtFix(this);calculateQuote('main')">
                     <select class="token-select" id="main-from-token" onchange="onTokenChange('main')"></select><img class="tok-chip" id="main-from-logo" alt="">
                 </div>
             </div>
@@ -598,7 +630,7 @@ input[type=text]::placeholder,input[type=number]::placeholder,textarea::placehol
                     <span>Bakiye: <span class="highlight" id="btc-from-bal">0.00</span></span>
                 </div>
                 <div class="input-bottom">
-                    <input type="number" id="btc-from-amount" placeholder="0.0" oninput="calculateQuote('btc')">
+                    <input type="text" inputmode="decimal" autocomplete="off" autocapitalize="off" spellcheck="false" id="btc-from-amount" placeholder="0.0" oninput="amtFix(this);calculateQuote('btc')">
                     <select class="token-select" id="btc-from-token" onchange="onTokenChange('btc')"></select><img class="tok-chip" id="btc-from-logo" alt="">
                 </div>
             </div>
@@ -642,7 +674,7 @@ input[type=text]::placeholder,input[type=number]::placeholder,textarea::placehol
                     <span>Bakiye: <span class="highlight" id="eth-from-bal">0.00</span></span>
                 </div>
                 <div class="input-bottom">
-                    <input type="number" id="eth-from-amount" placeholder="0.0" oninput="calculateQuote('eth')">
+                    <input type="text" inputmode="decimal" autocomplete="off" autocapitalize="off" spellcheck="false" id="eth-from-amount" placeholder="0.0" oninput="amtFix(this);calculateQuote('eth')">
                     <select class="token-select" id="eth-from-token" onchange="onTokenChange('eth')"></select><img class="tok-chip" id="eth-from-logo" alt="">
                 </div>
             </div>
@@ -976,9 +1008,14 @@ input[type=text]::placeholder,input[type=number]::placeholder,textarea::placehol
         eth.on('chainChanged', () => location.reload());
         eth.on('disconnect', () => { try { localStorage.removeItem('wc_on'); } catch (e) {} location.reload(); });
     }
-    async function walletDisconnect() {
+    async function walletDisconnect() {   // GÜVENLİ ÇIKIŞ: izni geri al, oturumu kapat, bu cihazdaki kayıtları sil
+        if (!confirm('Güvenli çıkış yapılsın mı? Cüzdan bağlantısı ve bu cihazdaki oturum kapatılır.')) return;
+        try { const e = getEth(); if (e && e.request && !(walletProvider && walletProvider.disconnect)) await e.request({ method: 'wallet_revokePermissions', params: [{ eth_accounts: {} }] }); } catch (e) {}
         try { if (walletProvider && walletProvider.disconnect) await walletProvider.disconnect(); } catch (e) {}
-        try { localStorage.removeItem('wc_on'); localStorage.setItem('wallet_off', '1'); } catch (e) {}
+        try {
+            Object.keys(localStorage).filter(k => /^(wc@2|walletconnect|WALLETCONNECT)/i.test(k) || k === 'wc_on' || k === 'wallet_last').forEach(k => localStorage.removeItem(k));
+            localStorage.setItem('wallet_off', '1'); sessionStorage.clear();
+        } catch (e) {}
         location.reload();
     }
     document.addEventListener('visibilitychange', async () => {   // cüzdan uygulamasından dönünce hesabı tazele
@@ -1042,6 +1079,28 @@ input[type=text]::placeholder,input[type=number]::placeholder,textarea::placehol
         bg.appendChild(box); document.body.appendChild(bg);
     }
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeWalletModal(); });
+
+    /* ===== Ana ekrana ekle (PWA): Android'de kurulum penceresi, iPhone/iPad'de adım adım yönerge ===== */
+    let _dip = null;
+    window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); _dip = e; });
+    window.addEventListener('appinstalled', () => { _dip = null; const r = document.getElementById('pwa-row'); if (r) r.style.display = 'none'; });
+    window.addEventListener('load', () => {
+        if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+        if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true) { const r = document.getElementById('pwa-row'); if (r) r.style.display = 'none'; }
+    });
+    async function installAndroid() { if (_dip) { _dip.prompt(); try { await _dip.userChoice; } catch (e) {} _dip = null; } else pwaHelp('android'); }
+    function pwaHelp(os) {
+        closeWalletModal();
+        const bg = document.createElement('div'); bg.className = 'wm-bg'; bg.id = 'wm-modal'; bg.onclick = e => { if (e.target === bg) closeWalletModal(); };
+        const box = document.createElement('div'); box.className = 'wm-box'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true');
+        const hd = document.createElement('div'); hd.className = 'wm-h'; hd.appendChild(document.createTextNode(os === 'ios' ? '🍎 iPHONE / iPAD' : '🤖 ANDROID'));
+        const x = document.createElement('button'); x.className = 'wm-x'; x.textContent = '✕'; x.onclick = closeWalletModal; hd.appendChild(x); box.appendChild(hd);
+        const steps = os === 'ios'
+            ? ['Bu sayfayı Safari’de açın (Telegram, Instagram veya cüzdan içi tarayıcıda olmaz).', 'Alttaki Paylaş düğmesine (kare ve yukarı ok) dokunun.', '“Ana Ekrana Ekle”yi seçip “Ekle”ye dokunun.', 'Ana ekrandaki RSM simgesinden uygulama gibi açın.']
+            : ['Bu sayfayı Chrome’da açın (cüzdan içi tarayıcıda olmaz).', 'Sağ üstteki ⋮ menüsüne dokunun.', '“Uygulamayı yükle” ya da “Ana ekrana ekle”yi seçin.', 'Ana ekrandaki RSM simgesinden uygulama gibi açın.'];
+        const ol = document.createElement('ol'); ol.className = 'wm-steps'; steps.forEach(s => { const li = document.createElement('li'); li.textContent = s; ol.appendChild(li); }); box.appendChild(ol);
+        bg.appendChild(box); document.body.appendChild(bg);
+    }
 
     // Sayfa yenilenince (chainChanged) seçili ağı ve izin verilmiş cüzdanı sessizce geri yükler.
     async function restoreWallet() {
@@ -1201,6 +1260,24 @@ input[type=text]::placeholder,input[type=number]::placeholder,textarea::placehol
     }
 
     /* Real-Time Wallet Balance Query Engine */
+    /* Telefonda yazılan ondalık virgülü noktaya çevirir, geçersiz karakteri atar */
+    function amtFix(el) {
+        let v = String(el.value).replace(',', '.').replace(/[^0-9.]/g, ''); const i = v.indexOf('.');
+        if (i >= 0) v = v.slice(0, i + 1) + v.slice(i + 1).replace(/\./g, '');
+        if (v !== el.value) el.value = v;
+    }
+    /* Bakiye: cüzdanın bağlantısı (doğru zincirdeyse) → herkese açık RPC; her biri 7 sn ile sınırlı */
+    async function balTry(fn) {
+        const list = [];
+        try { if (provider && provider.getNetwork && (await provider.getNetwork()).chainId === parseInt(currentChainId, 16)) list.push(provider); } catch (e) {}
+        list.push(readRpc(currentChainId));
+        let last;
+        for (const pr of list) { try { return await Promise.race([fn(pr), new Promise((_, rej) => setTimeout(() => rej(new Error('zaman aşımı')), 7000))]); } catch (e) { last = e; } }
+        throw last;
+    }
+    setInterval(() => { if (userAddress && !document.hidden) updateAllBalances().catch(() => {}); }, 15000);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden && userAddress) updateAllBalances().catch(() => {}); });
+
     async function getBalanceForToken(tokenSymbol) {
         if (!userAddress || !provider) return "0.00";
         try {
@@ -1209,15 +1286,14 @@ input[type=text]::placeholder,input[type=number]::placeholder,textarea::placehol
             if (!token) return "0.00";
 
             if (token.isNative) {
-                const rawBal = await readRpc(currentChainId).getBalance(userAddress);
+                const rawBal = await balTry(p => p.getBalance(userAddress));
                 return parseFloat(ethers.utils.formatEther(rawBal)).toFixed(4);
             } else {
-                const contract = new ethers.Contract(token.address, ERC20_ABI, readRpc(currentChainId));
-                const rawBal = await contract.balanceOf(userAddress);
+                const rawBal = await balTry(p => new ethers.Contract(token.address, ERC20_ABI, p).balanceOf(userAddress));
                 return parseFloat(ethers.utils.formatUnits(rawBal, token.decimals)).toFixed(4);
             }
         } catch (e) {
-            return "0.00";
+            return "—";
         }
     }
 
@@ -2844,6 +2920,41 @@ const AU_BOT_KEY = 'arb_bots';
 </script>
 </body>
 </html>
+{
+ "name": "RISASIMANI RASEM · GÜROK STOŞHİ DEX",
+ "short_name": "RSM DEX",
+ "description": "BNB Smart Chain üzerinde RSM ve ASM takas arayüzü",
+ "start_url": "./",
+ "scope": "./",
+ "display": "standalone",
+ "orientation": "portrait",
+ "background_color": "#050507",
+ "theme_color": "#050507",
+ "lang": "tr",
+ "icons": [
+  {
+   "src": "icons/icon-192.png",
+   "sizes": "192x192",
+   "type": "image/png",
+   "purpose": "any"
+  },
+  {
+   "src": "icons/icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "any"
+  }
+ ]
+}
+// Minimal servis çalışanı: yükleme (PWA) için gerekli; önbellek tutmaz, bu yüzden eski sayfa göstermez.
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
+self.addEventListener('fetch', e => {
+  const u = new URL(e.request.url);
+  if (e.request.method !== 'GET' || u.origin !== location.origin) return;
+  e.respondWith(fetch(e.request).catch(() => new Response('Çevrimdışısınız. Bağlantı gelince sayfayı yenileyin.', { status: 503, headers: { 'Content-Type': 'text/plain; charset=utf-8' } })));
+});
+
 {
   "name": "Karakuzular Network · RSM & RASEM",
   "timestamp": "2026-11-16T00:00:00.000Z",
