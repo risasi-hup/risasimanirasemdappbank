@@ -1000,7 +1000,8 @@ input[type=text]::placeholder,input[type=number]::placeholder,textarea::placehol
         const ids = Object.keys(NETWORKS).map(k => parseInt(k, 16)), rpcMap = {}; Object.keys(NETWORKS).forEach(k => { rpcMap[parseInt(k, 16)] = NETWORKS[k].rpcUrls[0]; });
         _wcP = await EP.init({ projectId: WC_PROJECT_ID, chains: [56], optionalChains: ids, showQrModal: true, rpcMap,
             methods: ['eth_sendTransaction', 'personal_sign'], optionalMethods: ['wallet_switchEthereumChain', 'wallet_addEthereumChain', 'wallet_watchAsset', 'eth_signTypedData_v4'], events: ['chainChanged', 'accountsChanged'],
-            metadata: { name: 'RISASIMANI DEX', description: 'BNB Smart Chain takas arayüzü', url: location.origin, icons: [location.origin + '/logos/rsm-256.png'] } });
+            metadata: { name: 'RISASIMANI DEX', description: 'BNB Smart Chain takas arayüzü', url: location.origin, icons: [location.origin + '/logos/rsm-256.png'],
+                redirect: { universal: location.origin + location.pathname } } });   // cüzdan onaydan sonra kullanıcıyı BU sayfaya döndürür
         return _wcP;
     }
     async function connectWC() {
@@ -1019,6 +1020,7 @@ input[type=text]::placeholder,input[type=number]::placeholder,textarea::placehol
         const box = document.createElement('div'); box.className = 'wm-box'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true');
         const hd = document.createElement('div'); hd.className = 'wm-h'; hd.appendChild(document.createTextNode('CÜZDAN SEÇ'));
         const x = document.createElement('button'); x.className = 'wm-x'; x.textContent = '✕'; x.onclick = closeWalletModal; hd.appendChild(x); box.appendChild(hd);
+        const hs = document.createElement('div'); hs.className = 'wm-note'; hs.style.marginTop = '0'; hs.textContent = 'Bağlanılacak site: ' + location.host; box.appendChild(hs);
         const sec = t => { const d = document.createElement('div'); d.className = 'wm-sec'; d.textContent = t; box.appendChild(d); };
         const btn = (label, icon, fn, href) => {
             const b = document.createElement(href ? 'a' : 'button'); b.className = 'wm-btn';
